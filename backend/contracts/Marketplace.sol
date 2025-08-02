@@ -11,9 +11,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol"; // Импорт IERC20 
 
 
 contract Marketplace  is BlacklistControl, Ownable {
-    uint public fee = 3;
-    IERC1155 public tokenContract; 
-    IERC20 public usdtContract; 
+   
 
     enum Category {
     ALL, // категория "Все"
@@ -36,6 +34,16 @@ event AmountDecreased(address indexed owner, uint indexed tokenId, uint amount);
 event PriceUpdated(address indexed owner, uint indexed tokenId, uint newPrice);
 event AllTokensRemoved(address indexed owner); 
 event TokenMetadataUpdated(uint256 tokenId, string uri); // Событие для записи изменения URI метаданных
+event Debug(uint256 tokenId, uint256 category, bool isNFT); // Объявляем событие
+event TokenAvailable(uint256 tokenId);
+event FeeProcessed(address indexed seller, address indexed owner, uint totalAmount, uint feeAmount, uint sellerAmount);
+
+uint public fee = 3;
+IERC1155 public tokenContract; 
+IERC20 public usdtContract; 
+uint256 public maxTokenId; // Максимальный tokenId, который был добавлен
+
+
 
 mapping(address owner => mapping (uint tokenId => OwnedToken)) public ownedTokens;  //предложение продавца 
 
@@ -49,85 +57,59 @@ mapping(uint256 => string) public tokenURIs;
 
 mapping(uint256 => TokenInfo) public tokenInfo;
 
-uint[] public availableTokenIds; // все что предлагает маркет плэйс 
+mapping(uint256 => bool) public availableTokenIds; // все что предлагает маркет плэйс 
+
  
-   constructor(address _tokenContract, address _admin,  address _usdtContract) Ownable(msg.sender){ // Вызываем конструктор Ownable с адресом владельца (развертывающий контракт)
+   constructor(address _tokenContract, address _admin,  address _usdtContract) Ownable(msg.sender){ 
         tokenContract = IERC1155(_tokenContract);
         admin = _admin;
         usdtContract = IERC20(_usdtContract);
     }
-function setTokenURI(uint256 tokenId, string memory uri) external onlyOwner {
-        tokenURIs[tokenId] = uri;
-        emit TokenMetadataUpdated(tokenId, uri);
-    }
-
-// Функция для установки категории и флага NFT токена
-function setTokenInfo(uint256 tokenId, Category category, bool _isNFT) external onlyOwner {
-    tokenInfo[tokenId].category = category;
-    tokenInfo[tokenId].isNFT = _isNFT;
-}
-// Функция для получения токенов по категории и типу (NFT/обычный)
-function getTokens(Category category, bool onlyNFT) external view returns (uint256[] memory) {
-    uint256[] memory result = new uint256[](availableTokenIds.length);
-    uint256 counter = 0;
-
-    for (uint256 i = 0; i < availableTokenIds.length; i++) {
-        uint256 tokenId = availableTokenIds[i];
-        TokenInfo storage currentTokenInfo = tokenInfo[tokenId];
-
-        // Проверяем категорию и флаг NFT (если указан)
-        if ((category == Category.ALL || currentTokenInfo.category == category) &&
-            (!onlyNFT || currentTokenInfo.isNFT)) {
-            result[counter] = tokenId;
-            counter++;
-        }
-    }
-    // Обрезаем массив до фактического количества элементов
-    uint256[] memory finalResult = new uint256[](counter);
-    for (uint256 i = 0; i < counter; i++) {
-        finalResult[i] = result[i];
-    }
-    return finalResult;
-}
 
 // для выставления на продажу сразу много id
-function addTokens(uint[] memory ids, uint[] memory amounts, uint[] memory prices) 
-external {
-    address tokensOwner = msg.sender; 
+function addTokens(uint[] memory ids, uint[] memory amounts, uint[] memory prices) external {
+    address tokensOwner = msg.sender;
     require(tokenContract.isApprovedForAll(tokensOwner, address(this)), "Approval needed");
     require(!blacklisted[msg.sender], "You are blacklisted.");
 
-    uint count = ids.length; 
+    uint count = ids.length;
 
-    require(count == amounts.length && count == prices.length, "Arrays must be same length"); // все массивы должны иметь одинаковую длину 
-    
-    for(uint i = 0; i< count; ++i) {
-    
-        uint currentId = ids[i]; 
+    require(count == amounts.length && count == prices.length, "Arrays must be same length"); // все массивы должны иметь одинаковую длину
+
+    for (uint i = 0; i < count; ++i) {
+        uint currentId = ids[i];
         uint currentBalance = tokenContract.balanceOf(tokensOwner, currentId);
-        uint currentAmount = amounts[i]; 
+        uint currentAmount = amounts[i];
 
-        require(currentBalance >= currentAmount); 
-        uint currentPrice = prices[i]; 
-        require(currentPrice > 0); 
-// проверка есть ли вообще этот токен на платформе, чтобы каждый раз не добавлять его 
-if (tokenInStock[currentId] ==0 ) {
-    availableTokenIds.push(currentId); 
-}
-tokenInStock[currentId] += currentAmount; 
-OwnedToken storage currentOwnedToken= ownedTokens[tokensOwner][currentId]; 
- 
-if(currentOwnedToken.price == 0 && currentOwnedToken.amount == 0){
-    tokensByOwner[tokensOwner].push(currentId); 
-    canBePurchasedFrom[currentId].push(tokensOwner); 
-}
+        require(currentBalance >= currentAmount, "Not enough balance");
+        uint currentPrice = prices[i];
+        require(currentPrice > 0, "Price must be greater than 0");
 
-currentOwnedToken.price = currentPrice; // один владелец не может продавать один и тот же токен по разной цене 
-currentOwnedToken.amount += currentAmount; // если владелец докладывает токены
+        // Проверка и обновление maxTokenId
+        if (currentId > maxTokenId) {
+            maxTokenId = currentId;
+        }
+
+        // Проверка, есть ли вообще этот токен на платформе, чтобы каждый раз не добавлять его
+        if (!availableTokenIds[currentId]) { //изменено условие. Было tokenInStock[currentId] == 0
+            availableTokenIds[currentId] = true;
+            emit TokenAvailable(currentId); 
+        }
+
+        tokenInStock[currentId] += currentAmount;
+        OwnedToken storage currentOwnedToken = ownedTokens[tokensOwner][currentId];
+
+        if (currentOwnedToken.price == 0 && currentOwnedToken.amount == 0) {
+            tokensByOwner[tokensOwner].push(currentId);
+            canBePurchasedFrom[currentId].push(tokensOwner);
+        }
+
+        currentOwnedToken.price = currentPrice; // один владелец не может продавать один и тот же токен по разной цене
+        currentOwnedToken.amount += currentAmount; // если владелец докладывает токены
     }
     emit TokensAdded(msg.sender, ids, amounts, prices);
 }
-    // Функция для изменения цены токена
+  // Функция для изменения цены токена
     function updatePrice(uint tokenId, uint newPrice) external {
           require(!blacklisted[msg.sender], "You are blacklisted.");
 
@@ -135,108 +117,110 @@ currentOwnedToken.amount += currentAmount; // если владелец докл
         ownedTokens[msg.sender][tokenId].price = newPrice;
         emit PriceUpdated(msg.sender, tokenId, newPrice);
     }
-    
-     // Функция частичной отмены предложения
-    function decreaseAmount(uint tokenId, uint amountToDecrease) external {
+        // Функция частичной отмены предложения
+    function decreaseAmount(uint tokenId, uint amountToDecrease) public {
         require(!blacklisted[msg.sender], "You are blacklisted.");
         require(ownedTokens[msg.sender][tokenId].amount >= amountToDecrease, "Not enough tokens to decrease");
         ownedTokens[msg.sender][tokenId].amount -= amountToDecrease;
         tokenInStock[tokenId] -= amountToDecrease;
         emit AmountDecreased(msg.sender, tokenId, amountToDecrease);
     }
-function removeAllTokens() external {
+    function removeAllTokens() external {
     require(!blacklisted[msg.sender], "You are blacklisted.");
-    address tokensOwner = msg.sender; 
-    uint totalTokensNum = tokensByOwner[tokensOwner].length; 
-   
-    for(uint i = 0; i < totalTokensNum; ++i) {
-        uint currentId = tokensByOwner[tokensOwner][i]; 
-        
-        OwnedToken storage currentToken = ownedTokens[tokensOwner][currentId]; 
-// в продаже этого токена стало меньше и на какое то кол-во 
-        decreaseTokensInStock(currentId, currentToken.amount); 
-        removeCanBePurchasedFrom(currentId, tokensOwner); 
-        removeOwnedTokens(currentId, tokensOwner); 
+    address tokensOwner = msg.sender;
+
+    // Проходим по массиву с конца, чтобы удаление не нарушало итерацию.
+    for (int i = int(tokensByOwner[tokensOwner].length) - 1; i >= 0; i--) {
+        uint currentId = tokensByOwner[tokensOwner][uint(i)];
+
+        // Важно проверить, что токен еще существует, перед тем как удалять.
+        if (ownedTokens[tokensOwner][currentId].amount > 0) {
+            uint amountToRemove = ownedTokens[tokensOwner][currentId].amount;
+
+            // Уменьшаем общее количество токенов в стоке.
+            decreaseTokensInStock(currentId, amountToRemove);
+
+            // Удаляем информацию о токене у владельца.
+            delete ownedTokens[tokensOwner][currentId];
+
+            // Удаляем владельца из списка тех, у кого можно купить этот токен.
+            removeCanBePurchasedFrom(currentId, tokensOwner);
+        }
+        // Удаляем токен из списка токенов, принадлежащих владельцу.
+          removeTokensByOwner(currentId, tokensOwner);
     }
-    delete tokensByOwner[tokensOwner]; 
-    emit AllTokensRemoved(tokensOwner); 
+    // Очищаем список токенов владельца.
+    delete tokensByOwner[tokensOwner];
+    emit AllTokensRemoved(tokensOwner);
 }
 
-// процесс покупки 
-function buy(uint[] memory ids, uint[] memory amounts) external payable {
- 
-    uint grandTotal = 0;
-    uint count = ids.length; 
-    require(count == amounts.length, "Arrays must have same length"); 
+function buy(uint[] memory ids, uint[] memory amounts) public payable {
+    uint grandTotal;
+    uint count = ids.length;
 
-// Переводим USDT с кошелька покупателя на контракт маркетплейса
-    usdtContract.transferFrom(msg.sender, address(this), grandTotal);
+    require(count == amounts.length, "Arrays must have same length");
+    require(msg.value == 0, "Do not send ETH, pay with USDT.");
 
     for(uint i = 0; i< count; ++i) {
-        uint currentId = ids[i]; // токен который хочет купить
-        uint desiredAmount = amounts[i]; // кол-во токенов 
+        uint currentId = ids[i];
+        uint desiredAmount = amounts[i];
+
         require(desiredAmount > 0, "Desired amount must be greater than zero");
-        require(availableAmount(currentId) >= desiredAmount, "Not enough tokens available"); 
-// цикл который будет бродить по владельцам и суммировать токены 
-uint currentAmount = 0; 
-uint j = 0; 
-while (currentAmount < desiredAmount) {
-    require(j < canBePurchasedFrom[currentId].length, "Not enough sellers");
+        require(availableAmount(currentId) >= desiredAmount, "Not enough tokens available");
 
-    bool allTokensBought; 
+        uint currentAmount = 0; // Инициализация здесь
+        uint j = 0; // Инициализация здесь
 
-    address currentOwner = canBePurchasedFrom[currentId][j]; 
-    OwnedToken storage currentlyOwnedToken = ownedTokens[currentOwner][currentId]; // сколько токенов,по какой цена (в первом меппинге информация)
-   
-uint requiredTokens = desiredAmount - currentAmount; // определить хватает ли у владельца токенов 
-// сколько можем реально взять 
-uint amountAvailable;
-uint currentPrice = currentlyOwnedToken.price; 
-require(currentPrice == ownedTokens[currentOwner][currentId].price,"Price changed!"); // Проверка цены
-// набрали или не набрали нужное кол-во 
-if (currentlyOwnedToken.amount > requiredTokens) {
-    amountAvailable = requiredTokens; 
-    currentlyOwnedToken.amount -= requiredTokens; 
-}else {
-    // случай когда покупаем сразу все токены этого владельца (<=) 
-    amountAvailable = currentlyOwnedToken.amount; 
+        while (currentAmount < desiredAmount) {
+            require(j < canBePurchasedFrom[currentId].length, "Not enough sellers");
 
-    removeCanBePurchasedFrom(currentId, currentOwner); 
-    removeTokensByOwner(currentId, currentOwner); 
-    removeOwnedTokens(currentId, currentOwner); 
+            address currentOwner = canBePurchasedFrom[currentId][j];
+            OwnedToken storage currentlyOwnedToken = ownedTokens[currentOwner][currentId];
+            uint currentPrice = currentlyOwnedToken.price;
 
-    allTokensBought = true; 
+            uint requiredTokens = desiredAmount - currentAmount;
+            uint amountAvailable = min(currentlyOwnedToken.amount, requiredTokens);
+
+            require(currentPrice == ownedTokens[currentOwner][currentId].price,"Price changed!"); 
+
+            uint subTotal = amountAvailable * currentPrice;
+            uint feeAmount = (subTotal * fee) / 100;
+
+            require(usdtContract.balanceOf(msg.sender) >= (subTotal + feeAmount), "Insufficient balance");
+            require(usdtContract.allowance(msg.sender, address(this)) >= (subTotal + feeAmount), "Insufficient USDT allowance");
+
+            // Переводим полную сумму с комиссией на маркетплейс, если покупатель платит комиссию.
+            // Затем маркетплейс отправляет sellerAmount продавцу и удерживает feeAmount.
+            usdtContract.transferFrom(msg.sender, address(this), subTotal + feeAmount); 
+            grandTotal += subTotal; 
+
+            currentAmount += amountAvailable;
+
+            currentlyOwnedToken.amount -= amountAvailable;
+            tokenInStock[currentId] -= amountAvailable;
+
+            tokenContract.safeTransferFrom(currentOwner, msg.sender, currentId, amountAvailable, "");
+            // _processFee(payable(currentOwner), subTotal); 
+            _processFee(payable(currentOwner), subTotal, feeAmount);
+            // Сначала выполняем очистку, если токены продавца закончились
+            if (currentlyOwnedToken.amount == 0) {
+                removeCanBePurchasedFrom(currentId, currentOwner);
+                removeTokensByOwner(currentId, currentOwner);
+                removeOwnedTokens(currentId, currentOwner);
+                // j не инкрементируется, если происходит swap-and-pop,
+                // так как следующий элемент теперь на текущей позиции j.
+            } else {
+                // Если у продавца остались токены, переходим к следующему индексу для следующей итерации.
+                j++;
+            }
+            // Теперь проверяем, достигли ли мы желаемого количества, и прерываем цикл.
+            // Это гарантирует, что очистка произойдет до выхода из цикла.
+            if (currentAmount >= desiredAmount) break;
+        }
+    }
+    emit TokensBought(msg.sender, ids, amounts);
 }
-currentAmount += amountAvailable; 
 
-decreaseTokensInStock(currentId, amountAvailable); // снижается кол-во токенов с продажи на величину второго аргумента сколько купили 
- 
-uint subTotal = amountAvailable * currentPrice; // промежуточная цена за токены 
-
-tokenContract.safeTransferFrom(currentOwner, msg.sender, currentId, amountAvailable, ""); 
-
-_processFee(payable(currentOwner), subTotal); // Вызываем функцию для обработки комиссии и перевода средств
-
-grandTotal += subTotal; 
-
-// если будет просто ++j и мы совершим удалениие одного из продавцов, а по моей логике его место займет последний продавец
-// а j уже будет не 0 а 1 и мы пропутсим этого продавца 
-//  то есть надо сделать так чтобы j увелич только когда мы никого не удаляем 
-// ++j только когда не все токены купили 
-if (!allTokensBought) ++j;  
-}
-}
-require(grandTotal == msg.value, "Incorrect amount sent");
-emit TokensBought(msg.sender, ids, amounts);
-}
-// Функция для расчета и распределения комиссии
-function _processFee(address payable seller, uint amount) internal {
-    address payable marketplaceOwner = payable(admin);
-    uint feeAmount = (amount * fee) / 100; // Используем значение fee из контракта
-    uint sellerAmount = amount - feeAmount;
-    usdtContract.transfer(marketplaceOwner, feeAmount);// Отправляем комиссию владельцу маркетплейса
-    usdtContract.transfer(seller, sellerAmount);// Отправляем остаток продавцу
-}
 // функция для подсчета сколько покупателю надо заплатить и нахождение самого дешевого варианта 
 function totalPrice(uint[] memory ids, uint[] memory amounts) external view returns (uint price) {
     uint count = ids.length;
@@ -249,8 +233,8 @@ function totalPrice(uint[] memory ids, uint[] memory amounts) external view retu
         require(desiredAmount > 0, "Desired amount must be greater than zero");
         require(availableAmount(currentId) >= desiredAmount, "Not enough tokens available");
 
-        uint currentAmount = 0;
-        uint j = 0;
+        uint currentAmount;
+        uint j;
 
         // Массивы для сбора информации о ценах и количествах каждого продавца
         uint[] memory sellerPrices = new uint[](canBePurchasedFrom[currentId].length);
@@ -294,41 +278,98 @@ function totalPrice(uint[] memory ids, uint[] memory amounts) external view retu
 function min(uint a, uint b) pure internal returns (uint) {
     return a < b ? a : b;
 }
+// сколлько реально продаем токенов 
+function availableAmount(uint256 _tokenId) public view returns (uint256) {
+    return tokenInStock[_tokenId]; 
+}
+// можно ли купить у кого нибудь 
+function anyOwners(uint256 _tokenId) public view returns (bool) {
+    return canBePurchasedFrom[_tokenId].length > 0; 
+}
+// Функция для расчета и распределения комиссии
+// function _processFee(address payable seller, uint amount) internal {
+//     address payable marketplaceOwner = payable(admin);
+//     uint feeAmount = (amount * fee) / 100; // Комиссия (в процентах)
+//     uint sellerAmount = amount - feeAmount; // Сумма, причитающаяся продавцу
+
+//     // Проверка: комиссия не может быть больше суммы продажи
+//     require(feeAmount <= amount, "Fee amount cannot exceed the total amount");
+
+//     // Перевод комиссии владельцу маркетплейса
+//     bool ownerTransferSuccess = usdtContract.transfer(marketplaceOwner, feeAmount);
+//     require(ownerTransferSuccess, "Failed to transfer fee to owner");
+
+//     // Перевод остатка продавцу
+//     bool sellerTransferSuccess = usdtContract.transfer(seller, sellerAmount);
+//     require(sellerTransferSuccess, "Failed to transfer to seller");
+
+//     // Эмитируем событие для отслеживания переводов
+//     emit FeeProcessed(seller, marketplaceOwner, amount, feeAmount, sellerAmount);
+// }
+            // Новая сигнатура
+            function _processFee(address payable seller, uint goodsPrice, uint actualFeeCollected) internal {
+                address payable marketplaceOwner = payable(admin);
+
+                // Перевод комиссии владельцу маркетплейса
+                bool ownerTransferSuccess = usdtContract.transfer(marketplaceOwner, actualFeeCollected);
+                require(ownerTransferSuccess, "Failed to transfer fee to owner");
+
+                // Перевод полной цены товара продавцу
+                bool sellerTransferSuccess = usdtContract.transfer(seller, goodsPrice);
+                require(sellerTransferSuccess, "Failed to transfer to seller");
+
+                emit FeeProcessed(seller, marketplaceOwner, goodsPrice + actualFeeCollected, actualFeeCollected, goodsPrice);
+            }
+            
 
 // чтобы убрать чтото из массива 
 // здесь мы чтобы не оставлять "дырки" заменяем этот элемент который убираем на последний элетент в массиве 
-function removeCanBePurchasedFrom(uint256 currentId, address currentOwner) private { 
+function removeCanBePurchasedFrom(uint256 currentId, address currentOwner) public { 
     uint256 ownerIndex = indexOfOwner(currentId, currentOwner); // иднекст ищет в массиве нужный элемент 
     canBePurchasedFrom[currentId][ownerIndex] = 
     canBePurchasedFrom[currentId][canBePurchasedFrom[currentId].length -1]; 
     canBePurchasedFrom[currentId].pop();
 }
-
-// уменьшение кол-ва этих токенов и удаляет все тела из масиива 
-function  decreaseTokensInStock(uint256 currentId, uint256 amount) private {
+// Уменьшение кол-ва этих токенов и удаляет из mapping если кол-во 0
+function decreaseTokensInStock(uint256 currentId, uint256 amount) public {
     require(tokenInStock[currentId] >= amount, "Not enough tokens in stock"); // Проверка, что в наличии достаточно токенов
-    tokenInStock[currentId] -= amount; 
+    tokenInStock[currentId] -= amount;
 
+    // Если токенов больше нет в стоке, удаляем его из списка доступных
     if (tokenInStock[currentId] == 0) {
-        uint256 index =  indexOfTokenId(currentId); 
-        availableTokenIds[index] = availableTokenIds[availableTokenIds.length - 1]; 
-        availableTokenIds.pop(); 
+        delete availableTokenIds[currentId]; // Удаляем токен из mapping
+    }
+}
+function removeOwnedTokens(uint currentId, address currentOwner) public {
+    // Эта функция предназначена для полного удаления информации о конкретном токене
+    // у конкретного владельца из mapping `ownedTokens`.  После вызова этой функции,
+    // `ownedTokens[currentOwner][currentId]` больше не должен содержать никаких данных.
+
+    // Проверяем, действительно ли существует запись о токене у данного владельца.
+    // Это дополнительная мера предосторожности, чтобы избежать потенциальных ошибок,
+    // хотя в теории, функция должна вызываться только если запись существует.
+
+    if (ownedTokens[currentOwner][currentId].amount > 0 || ownedTokens[currentOwner][currentId].price > 0) {
+        // Удаляем запись о токене у владельца.  `delete` в Solidity сбрасывает все
+        // поля структуры `OwnedToken` (amount и price) к их значениям по умолчанию (0).
+        delete ownedTokens[currentOwner][currentId];
     }
 }
 
-function indexOfTokenId(uint256 _searchFor) internal view returns (uint256) {
-    uint256 length = availableTokenIds.length; 
-    for (uint256 i = 0; i < length; ++i) {
-        if (availableTokenIds[i] == _searchFor) {
-            return i; 
-        }
-    }
-      return length; // Возвращаем длину массива, если элемент не найден (значит, его нет)
+function removeTokensByOwner(uint256 currentId, address currentOwner) public {
+    uint256 tokenByOwnerIndex = indexOfTokenByOwner(currentOwner, currentId);
 
+    // Проверяем, что токен действительно существует в списке.
+    require(tokenByOwnerIndex < tokensByOwner[currentOwner].length, "Token not found in owner's list");
+
+    // Если удаляется не последний элемент, меняем его местами с последним.
+    if (tokenByOwnerIndex < tokensByOwner[currentOwner].length - 1) {
+        tokensByOwner[currentOwner][tokenByOwnerIndex] = tokensByOwner[currentOwner][tokensByOwner[currentOwner].length - 1];
+    }
+    // Удаляем последний элемент (теперь дубликат или исходный последний элемент).
+    tokensByOwner[currentOwner].pop();
 }
-function removeOwnedTokens(uint currentId, address currentOwner) private {
-    delete ownedTokens[currentOwner][currentId]; 
-}
+
 function indexOfTokenByOwner(address _owner, uint256 _tokenToSearch) internal view returns (uint256) {
     uint256 length = tokensByOwner[_owner].length; 
 
@@ -339,13 +380,7 @@ function indexOfTokenByOwner(address _owner, uint256 _tokenToSearch) internal vi
     }
     revert("I cannot find the request element");
 }
-function removeTokensByOwner(uint256 currentId, address currentOwner) private {
-    uint256 tokenByOwnerIndex = indexOfTokenByOwner(currentOwner, currentId);
-    tokensByOwner[currentOwner][tokenByOwnerIndex] = 
-    tokensByOwner[currentOwner][tokensByOwner[currentOwner].length - 1]; 
-    tokensByOwner[currentOwner].pop();
 
-}
 function indexOfOwner(uint256 _tokenId, address _ownerToSearch) internal view returns (uint256) {
     uint256 length = canBePurchasedFrom[_tokenId].length; 
 
@@ -356,12 +391,46 @@ function indexOfOwner(uint256 _tokenId, address _ownerToSearch) internal view re
     }
     revert("I cannot find the request element");
 }
-// сколлько реально продаем токенов 
-function availableAmount(uint256 _tokenId) public view returns (uint256) {
-    return tokenInStock[_tokenId]; 
+
+function setTokenURI(uint256 tokenId, string memory uri) external onlyOwner {
+        tokenURIs[tokenId] = uri;
+        emit TokenMetadataUpdated(tokenId, uri);
+    }
+
+// Функция для установки категории и флага NFT токена
+function setTokenInfo(uint256 tokenId, Category category, bool _isNFT) external onlyOwner {
+    tokenInfo[tokenId].category = category;
+    tokenInfo[tokenId].isNFT = _isNFT;
 }
-// можно ли купить у кого нибудь 
-function anyOwners(uint256 _tokenId) public view returns (bool) {
-    return canBePurchasedFrom[_tokenId].length > 0; 
+
+function getTokens(Category category, bool onlyNFT) external view returns (uint256[] memory) {
+    uint256[] memory result = new uint256[](maxTokenId + 1); // Макс. размер, потом обрежем
+    uint256 counter = 0;
+
+    // Проходим по всем возможным tokenId от 0 до maxTokenId
+    for (uint256 i = 0; i <= maxTokenId; i++) {
+        // Проверяем, существует ли токен в принципе (предлагается ли он)
+        if (availableTokenIds[i]) {
+            TokenInfo storage currentTokenInfo = tokenInfo[i];
+
+            // Проверяем категорию и флаг NFT (если указан)
+            if ((category == Category.ALL || currentTokenInfo.category == category) &&
+                (!onlyNFT || currentTokenInfo.isNFT)) {
+                result[counter] = i;
+                counter++;
+            }
+        }
+    }
+
+    // Обрезаем массив до фактического количества элементов
+    uint256[] memory finalResult = new uint256[](counter);
+    for (uint256 i = 0; i < counter; i++) {
+        finalResult[i] = result[i];
+    }
+    return finalResult;
+}
+function getTokensByOwner(address _owner) external view returns (uint[] memory) {
+    // Возвращает копию массива tokenIds, принадлежащих указанному владельцу.
+    return tokensByOwner[_owner];
 }
 }
