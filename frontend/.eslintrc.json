@@ -1,0 +1,52 @@
+{
+  "extends": [
+    "next/core-web-vitals",
+    "plugin:@typescript-eslint/recommended", // Добавлен основной набор правил TS
+    "plugin:@typescript-eslint/recommended-requiring-type-checking", // Добавлен набор правил TS, требующих информации о типах (очень полезно!)
+    "plugin:react/recommended",
+    "plugin:react/jsx-runtime" // Рекомендуется для React 17+ и нового JSX transform
+  ],
+  "parser": "@typescript-eslint/parser", // Указываем ESLint использовать TypeScript парсер
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module",
+    "project": "./tsconfig.json", // Очень важно! Указывает на ваш tsconfig.json для правил, требующих информации о типах.
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "env": {
+    "mocha": true,
+    "browser": true, // Часто полезно явно указать для фронтенда
+    "node": true // Часто полезно явно указать для Next.js (серверная часть)
+  },
+  "plugins": [
+    "@typescript-eslint", // Добавляем плагин для TS
+    "react-hooks" // Убедитесь, что этот плагин добавлен, если используете rules для react-hooks
+  ],
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "react/jsx-filename-extension": [
+      1,
+      { "extensions": [".js", ".jsx", ".ts", ".tsx"] } // Добавляем .ts и .tsx
+    ],
+    "react/prop-types": "off", // TypeScript заменяет PropTypes, поэтому оставляем off
+    "react-hooks/exhaustive-deps": "warn", // Настоятельно рекомендуется установить в 'warn' или 'error'
+    
+    // Правила, которые конфликтуют с TypeScript или дублируются им:
+    "no-unused-vars": "off", // Отключаем базовое правило no-unused-vars
+    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }], // Используем TypeScript-версию
+    
+    "no-shadow": "off", // Отключаем базовое правило no-shadow
+    "@typescript-eslint/no-shadow": "error", // Используем TypeScript-версию
+    
+    // Опциональные, но часто полезные правила для TS/React:
+    "@typescript-eslint/explicit-function-return-type": "off", // Часто отключается в React-проектах, чтобы не требовать явный тип возврата для компонентов
+    "@typescript-eslint/ban-ts-comment": "warn" // Предупреждать о /*@ts-ignore*/
+  },
+  "settings": {
+    "react": {
+      "version": "detect" // Автоматически определять версию React
+    }
+  }
+}
