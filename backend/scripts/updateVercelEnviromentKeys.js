@@ -71,3 +71,10 @@ main()
     console.error(error)
     process.exit(1)
   })
+
+//   Этот скрипт предназначен для автоматического обновления переменных окружения в Vercel после развертывания.
+// Для работы скрипту нужны API-ключи Vercel: VERCEL_PROJECT_ID и VERCEL_TOKEN
+//  (или VERCEL_DEPLOY_TOKEN, нужно уточнить в документации Vercel).
+// В .env backend должны быть определены VERCEL_PROJECT_ID и VERCEL_TOKEN.
+// Скрипт запрашивает ID переменных окружения в Vercel, а затем обновляет значения переменных
+//  MARKETPLACE_CONTRACT_ADDRESS_${networkName} и NFT_CONTRACT_ADDRESS_${networkName} на Vercel.

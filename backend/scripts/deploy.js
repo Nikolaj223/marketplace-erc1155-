@@ -29,20 +29,20 @@ async function main() {
     process.env.IS_RUNNING = true;
 
     // Развертывание контракта MockUSDT
-    console.log('Deploying MockUSDT...');
-    const MockUSDT = await hre.ethers.getContractFactory('MockUSDT');
+    console.log('Deploying TestERC20...');
+    const TestERC20 = await hre.ethers.getContractFactory('TestERC20');
     const initialSupply = hre.ethers.parseUnits('1000000', 6);
-    const usdtContract = await MockUSDT.deploy(initialSupply);
+    const usdtContract = await TestERC20.deploy(initialSupply);
     await usdtContract.deployed();
-    console.log('MockUSDT deployed to:', usdtContract.address);
+    console.log('TestERC20 deployed to:', usdtContract.address);
 
     // Развертывание контракта ERC1155 (NFT)
-    console.log('Deploying MyERC1155Token...');
-    const MyERC1155Token = await hre.ethers.getContractFactory('MyERC1155Token');
+    console.log('Deploying TestToken...');
+    const TestToken = await hre.ethers.getContractFactory('TestToken');
     const baseURI = "ipfs://your-default-base-uri-for-metadata/";
-    const nftContract = await MyERC1155Token.deploy(baseURI);
+    const nftContract = await TestToken.deploy(baseURI);
     await nftContract.deployed();
-    console.log('MyERC1155Token (NFT) deployed to:', nftContract.address);
+    console.log('TestToken deployed to:', nftContract.address);
 
     // Развертывание контракта Marketplace
     console.log('Deploying Marketplace...');

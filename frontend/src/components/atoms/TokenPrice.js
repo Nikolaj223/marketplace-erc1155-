@@ -15,7 +15,7 @@ function getPriceLabel (priceType) { // Теперь принимает тип �
   }
 }
 
-export default function NFTPrice ({ price, priceType = 'price', currencyIcon = '/matic.png', currencySymbol = 'ETH' }) {
+export default function TokenPrice ({ price, priceType = 'price', currencyIcon = '/eth.png', currencySymbol = 'ETH' }) {
   // price: само числовое значение
   // priceType: строка, определяющая контекст цены ('sold', 'offered', 'unitPrice', 'totalPrice', 'lowestPrice')
   // currencyIcon: путь к иконке валюты
@@ -49,8 +49,9 @@ export default function NFTPrice ({ price, priceType = 'price', currencyIcon = '
       >
         <span style={{ display: 'inline-block', transform: 'translateY(3px)' }}>
           <Image
-            alt={currencySymbol}
-            src={currencyIcon}
+            alt= 'eth'
+            // src='/eth.png' 
+            src={currencyIcon}  // Используем пропс currencyIcon
             width="20px"
             height="20px"
             onMouseEnter={handlePopoverOpen}

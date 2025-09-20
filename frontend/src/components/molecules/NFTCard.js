@@ -3,22 +3,62 @@
 // Компонент карточки NFT, отображает информацию об NFT и кнопки действий.
 // NFTCard.jsx (Карточка для NFT - ERC721/ERC1155)
 import CardItem from './CardItem';
-import CardAddresses from './CardAddresses'; // Предположим, что такой компонент у вас есть
 
-function NFTCard({ item, classes }) { // item - объект с данными NFT
+function NFTCard({ nft, classes }) { // nft - объект с данными NFT
   return (
     <CardItem
-      title={item.name}
-      description={item.description}
-      image={item.image}
+      item={{ 
+        name: nft.name,
+        description: nft.description,
+        image: nft.image,
+        creator: nft.creator, // Добавляем creator
+        owner: nft.owner,       // Добавляем owner
+        seller: nft.seller       // Добавляем seller
+      }}
+      type="nft"
       classes={classes}
-    >
-      <CardAddresses nft={item} /> {/* Вывод адресов NFT */}
-    </CardItem>
+    />
   );
 }
 
 export default NFTCard;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import CardItem from './CardItem';
+// import CardAddresses from './CardAddresses'; // Предположим, что такой компонент у вас есть
+
+// function NFTCard({ item, classes }) { // item - объект с данными NFT
+//   return (
+//     <CardItem
+//       title={item.name}
+//       description={item.description}
+//       image={item.image}
+//       classes={classes}
+//     >
+//       <CardAddresses nft={item} /> {/* Вывод адресов NFT */}
+//     </CardItem>
+//   );
+// }
+
+// export default NFTCard;
 
 
 

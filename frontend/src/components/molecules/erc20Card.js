@@ -1,16 +1,18 @@
 // ERC20Card.jsx (Карточка для ERC20 токенов)
 import CardItem from './CardItem';
 
-function ERC20Card({ token, classes }) { // token - объект с данными ERC20 токена
+function ERC20Card({ token, classes }) {
   return (
     <CardItem
-      title={token.name}
-      description={token.symbol} // В качестве описания выводим символ токена
-      image={token.logoURI} // URI логотипа
+      item={{
+        name: token.name,
+        description: token.symbol,
+        image: token.logoURI,
+        contractAddress: token.address // Предположим, что это адрес контракта ERC20
+      }}
+      type="erc20"
       classes={classes}
-    >
-      <p>Total Supply: {token.totalSupply}</p> {/* Вывод общего предложения токенов */}
-    </CardItem>
+    />
   );
 }
 

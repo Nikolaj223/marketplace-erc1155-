@@ -1,3 +1,4 @@
+// для навигации 
 import PropTypes from 'prop-types'
 import Link from 'next/link'
 import { Button } from '@mui/material'

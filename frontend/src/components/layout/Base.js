@@ -1,8 +1,8 @@
 import { useContext } from 'react'
 import LowOnBalanceTip from '../molecules/LowOnBalanceTip'
 import NavBar from '../molecules/NavBar'
-import NFTModal from '../organisms/NFTModal'
-import NFTModalProvider from '../providers/NFTModalProvider'
+import TokenModal from '../organisms/TokenModal'
+import TokenModalProvider from '../providers/TokenModalProvider'
 import { Web3Context } from '../providers/Web3Provider'
 
 export default function BaseLayout ({ children }) {
@@ -10,12 +10,12 @@ export default function BaseLayout ({ children }) {
   const isLowOnEther = balance < 0.1
   return (
     <>
-      <NFTModalProvider>
+      <TokenModalProvider>
         <NavBar/>
         {hasWeb3 && isReady && network && isLowOnEther && <LowOnBalanceTip/>}
         {children}
-        <NFTModal/>
-      </NFTModalProvider>
+        <TokenModal/>
+      </TokenModalProvider>
     </>
   )
 }
