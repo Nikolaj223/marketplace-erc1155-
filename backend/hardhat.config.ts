@@ -1,29 +1,22 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import * as dotenv from "dotenv";
+import "@nomicfoundation/hardhat-verify";
 
 dotenv.config();
 
 const config: HardhatUserConfig = {
-  defaultNetwork: 'hardhat',
+  defaultNetwork: 'hardhat', 
   networks: {
     hardhat: {
-      chainId: 1337,
+      accounts: {
+        count: 20 
+      }
     },
-    sepolia: { // Добавляем конфигурацию для сети Sepolia
-      url: `https://sepolia.infura.io/v3/${process.env.INFURA_ID}`, // Замените на свой URL Infura или Alchemy для Sepolia
-      accounts: [process.env.SEPOLIA_TESTNET_PRIVATE_KEY || ""], // Используем приватный ключ Sepolia из .env
+    sepolia: { 
+      url: `https://sepolia.infura.io/v3/${process.env.INFURA_ID}`, 
+      accounts: [process.env.SEPOLIA_TESTNET_PRIVATE_KEY || ""], 
     },
-    mumbai: {
-      url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`,
-      accounts: [process.env.ACCOUNT_PRIVATE_KEY || "", process.env.ACCOUNT2_PRIVATE_KEY || ""],
-      gas: 5500000,
-      gasPrice: 7000000000
-    },
-    mainnet: {
-      url: `https://mainnet.infura.io/v3/${process.env.INFURA_ID}`,
-      accounts: [process.env.ACCOUNT_PRIVATE_KEY || "", process.env.ACCOUNT2_PRIVATE_KEY || ""],
-    }
   },
   solidity: {
     version: "0.8.28",
@@ -34,9 +27,113 @@ const config: HardhatUserConfig = {
       }
     }
   },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY, // Добавьте ваш Etherscan API key в .env
+  },
 };
 
 export default config;
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import { HardhatUserConfig } from "hardhat/config";
+// import "@nomicfoundation/hardhat-toolbox";
+// import * as dotenv from "dotenv";
+
+// dotenv.config();
+
+// const config: HardhatUserConfig = {
+//   defaultNetwork: 'hardhat', // Важно: Меняем сеть по умолчанию на Hardhat для тестов
+//   networks: {
+//     hardhat: {
+//       accounts: {
+//         count: 20 // Убедитесь, что достаточно аккаунтов для ваших тестов
+//       }
+//     },
+//     sepolia: { // Конфигурация для сети Sepolia
+//       url: `https://sepolia.infura.io/v3/${process.env.INFURA_ID}`, // URL Infura для Sepolia из .env
+//       accounts: [process.env.SEPOLIA_TESTNET_PRIVATE_KEY || ""], // Приватный ключ Sepolia из .env
+//     },
+//   },
+//   solidity: {
+//     version: "0.8.28",
+//     settings: {
+//       optimizer: {
+//         enabled: true,
+//         runs: 200
+//       }
+//     }
+//   },
+// };
+
+// export default config;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import { HardhatUserConfig } from "hardhat/config";
+// import "@nomicfoundation/hardhat-toolbox";
+// import * as dotenv from "dotenv";
+
+// dotenv.config();
+
+// const config: HardhatUserConfig = {
+//   defaultNetwork: 'hardhat',
+//   networks: {
+//     hardhat: {
+//       chainId: 1337,
+//     },
+//     sepolia: { // Добавляем конфигурацию для сети Sepolia
+//       url: `https://sepolia.infura.io/v3/${process.env.INFURA_ID}`, // Замените на свой URL Infura или Alchemy для Sepolia
+//       accounts: [process.env.SEPOLIA_TESTNET_PRIVATE_KEY || ""], // Используем приватный ключ Sepolia из .env
+//     },
+//     mumbai: {
+//       url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`,
+//       accounts: [process.env.ACCOUNT_PRIVATE_KEY || "", process.env.ACCOUNT2_PRIVATE_KEY || ""],
+//       gas: 5500000,
+//       gasPrice: 7000000000
+//     },
+//     mainnet: {
+//       url: `https://mainnet.infura.io/v3/${process.env.INFURA_ID}`,
+//       accounts: [process.env.ACCOUNT_PRIVATE_KEY || "", process.env.ACCOUNT2_PRIVATE_KEY || ""],
+//     }
+//   },
+//   solidity: {
+//     version: "0.8.28",
+//     settings: {
+//       optimizer: {
+//         enabled: true,
+//         runs: 200
+//       }
+//     }
+//   },
+// };
+
+// export default config;
 
 
 

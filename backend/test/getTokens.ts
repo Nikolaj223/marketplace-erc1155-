@@ -12,7 +12,12 @@ describe("Marketplace - getTokens Test", function () {
   let ownerAddress: string, addr1Address: string, addr2Address: string;
 
   async function deployOnlyContracts() {
-    [owner, addr1, addr2] = await ethers.getSigners() as SignerWithAddress[];
+    const signers = await ethers.getSigners(); // Получаем массив SignerWithAddress
+    if (signers.length < 3) {          // Проверяем, что в массиве минимум 3 аккаунта
+      throw new Error("Недостаточно аккаунтов для теста!"); // Выбрасываем ошибку, если их меньше 3
+    }
+    [owner, addr1, addr2] = signers as SignerWithAddress[]; // Присваиваем значения
+
     ownerAddress = await owner.address;
     addr1Address = await addr1.address;
     addr2Address = await addr2.address;
@@ -32,11 +37,65 @@ describe("Marketplace - getTokens Test", function () {
     return { marketplace, tokenContract, usdtContract, owner, addr1, addr2, ownerAddress, addr1Address, addr2Address };
   }
 
+
   beforeEach(async function () {
-    ({ marketplace, tokenContract, usdtContract, owner, addr1, addr2, ownerAddress, addr1Address, addr2Address } = await loadFixture(deployOnlyContracts));
-    await tokenContract.connect(owner).mint(addr1Address, 1, 1, "0x"); // Mint 1 токен ID 1 для addr1
-    await tokenContract.connect(addr1).setApprovalForAll(marketplace.target, true);
-  });
+      const { marketplace: _marketplace, tokenContract: _tokenContract, usdtContract: _usdtContract, owner: _owner, addr1: _addr1, addr2: _addr2, ownerAddress, addr1Address, addr2Address } = await loadFixture(deployOnlyContracts);
+      marketplace = _marketplace;
+      tokenContract = _tokenContract;
+      usdtContract = _usdtContract;
+      owner = _owner;
+      addr1 = _addr1;
+      addr2 = _addr2;
+      await tokenContract.connect(owner).mint(addr1Address, 1, 1, "0x"); // Mint 1 токен ID 1 для addr1
+      await tokenContract.connect(addr1).setApprovalForAll(marketplace.target, true);
+    });
+
+
+
+
+
+
+
+// import { expect } from "chai";
+// import { ethers } from "hardhat";
+// import { Marketplace, TestToken, TestERC20} from "../typechain-types";
+// import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
+// import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+
+// describe("Marketplace - getTokens Test", function () {
+//   let marketplace: Marketplace;
+//   let tokenContract: TestToken;
+//   let usdtContract: TestERC20;
+//   let owner: SignerWithAddress, addr1: SignerWithAddress, addr2: SignerWithAddress;
+//   let ownerAddress: string, addr1Address: string, addr2Address: string;
+
+//   async function deployOnlyContracts() {
+//     [owner, addr1, addr2] = await ethers.getSigners() as SignerWithAddress[];
+//     ownerAddress = await owner.address;
+//     addr1Address = await addr1.address;
+//     addr2Address = await addr2.address;
+
+//     const TestTokenFactory = await ethers.getContractFactory("TestToken");
+//     const tokenContract = await TestTokenFactory.deploy("ipfs://your_ipfs_uri") as TestToken;
+//     await tokenContract.waitForDeployment();
+
+//     const TestERC20Factory = await ethers.getContractFactory("TestERC20");
+//     const usdtContract = await TestERC20Factory.deploy("Tether", "USDT", 18) as TestERC20;
+//     await usdtContract.waitForDeployment();
+
+//     const MarketplaceFactory = await ethers.getContractFactory("Marketplace");
+//     const marketplace = await MarketplaceFactory.deploy(tokenContract.target, ownerAddress, usdtContract.target) as Marketplace;
+//     await marketplace.waitForDeployment();
+
+//     return { marketplace, tokenContract, usdtContract, owner, addr1, addr2, ownerAddress, addr1Address, addr2Address };
+//   }
+
+  // beforeEach(async function () {
+  //   ({ marketplace, tokenContract, usdtContract, owner, addr1, addr2, ownerAddress, addr1Address, addr2Address } = await loadFixture(deployOnlyContracts));
+  //   await tokenContract.connect(owner).mint(addr1Address, 1, 1, "0x"); // Mint 1 токен ID 1 для addr1
+  //   await tokenContract.connect(addr1).setApprovalForAll(marketplace.target, true);
+  // });
+  
 
   it("Should remove token from available lists when amount reaches 0 after buying", async function () {
     const tokenId = 1;
