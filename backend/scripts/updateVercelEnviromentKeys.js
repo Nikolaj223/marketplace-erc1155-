@@ -59,10 +59,13 @@ async function triggerDeployment () {
 }
 
 async function main () {
-  const networkName = hre.network.name.toUpperCase()
-  // тут возможно поменять по названию 
-  await updateVercelEnviromentVariableByNames(`MARKETPLACE_CONTRACT_ADDRESS_${networkName}`, `NFT_CONTRACT_ADDRESS_${networkName}`)
-  await triggerDeployment()
+  const networkName = hre.network.name.toUpperCase(); // SEPOLIA
+const marketplaceAddress = `MARKETPLACE_CONTRACT_ADDRESS_${networkName}`;
+const nftAddress = `TestToken_ADDRESS_${networkName}`;
+const erc20Address = `TEST_ERC20_CONTRACT_ADDRESS_${networkName}`;
+const blacklistAddress = `BLACKLIST_CONTRACT_ADDRESS_${networkName}`;
+
+await updateVercelEnviromentVariableByNames(marketplaceAddress, nftAddress, erc20Address, blacklistAddress);
 }
 
 main()
