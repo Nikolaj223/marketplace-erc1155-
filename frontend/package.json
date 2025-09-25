@@ -1,21 +1,14 @@
 {
   "dependencies": {
     "@tanstack/react-query": "^5.84.1",
+    "next": "^15.5.4",
     "viem": "^2.33.2",
     "wagmi": "^2.16.1"
   },
   "scripts": {
-    "dev": "next dev",      
-
-    "build": "next build",    
-    "start": "next start",    
-    "lint": "next lint"      
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   }
 }
-
-
-
-
-
-
-
