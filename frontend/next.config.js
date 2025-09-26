@@ -1,9 +1,13 @@
-//  next.config.js нужен, если вы используете Next.js для построения своего фронтенда,
-module.exports = {
-    //  Включает "строгий режим" React.
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   reactStrictMode: true,
-//   который используется для оптимизации изображений
   images: {
     domains: ['ipfs.io']
-  }
-}
+  },
+  outputFileTracingRoot: __dirname, // Указываем корень проекта
+   transpilePackages: ['@wagmi/core',
+    '@wagmi/chains',
+    '@wagmi/connectors'],//укажим пакеты для транспиляции
+};
+
+module.exports = nextConfig;
