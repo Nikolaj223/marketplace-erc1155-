@@ -1,50 +1,3 @@
-import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
-import * as dotenv from "dotenv";
-import "@nomicfoundation/hardhat-verify";
-
-dotenv.config();
-
-const config: HardhatUserConfig & { remappings?: string[] } = {
-  defaultNetwork: 'hardhat',
-  networks: {
-    hardhat: {
-      accounts: {
-        count: 20
-      }
-    },
-    sepolia: {
-      url: `https://sepolia.infura.io/v3/${process.env.INFURA_ID}`,
-      accounts: [process.env.SEPOLIA_TESTNET_PRIVATE_KEY || ""],
-    },
-  },
-  solidity: {
-    version: "0.8.28",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200
-      }
-    }
-  },
-  etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY, // Добавьте ваш Etherscan API key в .env
-  },
-  paths: {
-    sources: "./contracts",
-    cache: "./cache",
-    artifacts: "./artifacts"
-  },
-  remappings: [
-    "@openzeppelin/=node_modules/@openzeppelin/"
-  ]
-};
-
-export default config;
-
-
-
-
 // import { HardhatUserConfig } from "hardhat/config";
 // import "@nomicfoundation/hardhat-toolbox";
 // import * as dotenv from "dotenv";
@@ -52,17 +5,17 @@ export default config;
 
 // dotenv.config();
 
-// const config: HardhatUserConfig = {
-//   defaultNetwork: 'hardhat', 
+// const config: HardhatUserConfig & { remappings?: string[] } = {
+//   defaultNetwork: 'hardhat',
 //   networks: {
 //     hardhat: {
 //       accounts: {
-//         count: 20 
+//         count: 20
 //       }
 //     },
-//     sepolia: { 
-//       url: `https://sepolia.infura.io/v3/${process.env.INFURA_ID}`, 
-//       accounts: [process.env.SEPOLIA_TESTNET_PRIVATE_KEY || ""], 
+//     sepolia: {
+//       url: `https://sepolia.infura.io/v3/${process.env.INFURA_ID}`,
+//       accounts: [process.env.SEPOLIA_TESTNET_PRIVATE_KEY || ""],
 //     },
 //   },
 //   solidity: {
@@ -77,9 +30,56 @@ export default config;
 //   etherscan: {
 //     apiKey: process.env.ETHERSCAN_API_KEY, // Добавьте ваш Etherscan API key в .env
 //   },
+//   paths: {
+//     sources: "./contracts",
+//     cache: "./cache",
+//     artifacts: "./artifacts"
+//   },
+//   remappings: [
+//     "@openzeppelin/=node_modules/@openzeppelin/"
+//   ]
 // };
 
 // export default config;
+
+
+
+
+import { HardhatUserConfig } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
+import * as dotenv from "dotenv";
+import "@nomicfoundation/hardhat-verify";
+
+dotenv.config();
+
+const config: HardhatUserConfig = {
+  defaultNetwork: 'hardhat', 
+  networks: {
+    hardhat: {
+      accounts: {
+        count: 20 
+      }
+    },
+    sepolia: { 
+      url: `https://sepolia.infura.io/v3/${process.env.INFURA_ID}`, 
+      accounts: [process.env.SEPOLIA_TESTNET_PRIVATE_KEY || ""], 
+    },
+  },
+  solidity: {
+    version: "0.8.28",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200
+      }
+    }
+  },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY, // Добавьте ваш Etherscan API key в .env
+  },
+};
+
+export default config;
 
 
 

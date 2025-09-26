@@ -1,8 +1,8 @@
 import { WagmiProvider, createConfig, configureChains } from 'wagmi';
 import { sepolia } from 'wagmi/chains'; // Import Sepolia
 import { publicProvider } from 'wagmi/providers/public';
-import { MetaMaskConnector } from 'wagmi/connectors/metaMask';
-import { WalletConnectConnector } from 'wagmi/connectors/walletConnect';
+import { MetaMaskConnector } from '@wagmi/connectors/metaMask';
+import { WalletConnectConnector } from '@wagmi/connectors/walletConnect';
 
 const { publicClient, webSocketPublicClient } = configureChains(
   [sepolia], // Use Sepolia chain
@@ -22,7 +22,7 @@ const config = createConfig({
   ],
 });
 
-import TokenModalProvider from '../src/providers/TokenModalProvider';
+import TokenModalProvider from '../src/components/providers/TokenModalProvider';
 
 function MyApp({ Component, pageProps }) {
   return (
