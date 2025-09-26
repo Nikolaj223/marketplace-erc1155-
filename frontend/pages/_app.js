@@ -1,8 +1,8 @@
 import { WagmiProvider, createConfig, configureChains } from 'wagmi';
-import { sepolia } from 'wagmi/chains'; // Import Sepolia
+import { sepolia } from 'wagmi/chains';
 import { publicProvider } from 'wagmi/providers/public';
-import { MetaMaskConnector } from '@wagmi/connectors/metaMask';
-import { WalletConnectConnector } from '@wagmi/connectors/walletConnect';
+import { MetaMaskConnector } from '@wagmi/core/connectors/metaMask';
+import { WalletConnectConnector } from '@wagmi/core/connectors/walletConnect';
 
 const { publicClient, webSocketPublicClient } = configureChains(
   [sepolia], // Use Sepolia chain
