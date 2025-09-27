@@ -3,9 +3,9 @@
     "@emotion/react": "^11.11.1",
     "@emotion/server": "^11.11.0",
     "@emotion/styled": "^11.11.0",
-    "@mui/material": "^5.15.11", 
+    "@mui/material": "^5.15.11",
     "@tanstack/react-query": "^5.8.1",
-    "@wagmi/connectors": "^2.0.0", 
+    "@wagmi/connectors": "^2.0.0",
     "@wagmi/core": "^2.17.5",
     "axios": "^1.1.2",
     "form-data": "^4.0.4",
@@ -13,6 +13,8 @@
     "next-connect": "^1.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
+    "react-hook-form": "^7.63.0",
+    "react-infinite-scroll-component": "^6.1.0",
     "styled-components": "^6.1.19",
     "viem": "^2.33.2",
     "wagmi": "^2.17.5"
@@ -24,10 +26,12 @@
     "lint": "next lint"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
     "eslint": "^8",
     "eslint-config-next": "14.0.0"
   },
-    "eslintConfig": {
+  "eslintConfig": {
     "extends": "next/core-web-vitals"
   }
 }
