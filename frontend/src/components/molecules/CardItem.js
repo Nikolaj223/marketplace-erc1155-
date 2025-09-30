@@ -12,7 +12,7 @@
 // import PriceTextField from '../atoms/PriceTextField'
 // import QuantityTextField from '../atoms/QuantityTextField'
 
-import { makeStyles } from '@mui/styles';
+import { styled } from '@mui/material/styles'; // Исправлен импорт стилей
 import { Card, CardContent, CardMedia, Typography, Button } from '@mui/material';
 import CardAddresses from './CardAddresses';
 import TokenDescription from '../atoms/TokenDescription';
@@ -24,54 +24,43 @@ import { useState, useContext } from 'react';
 import { Web3Context } from '../providers/Web3Provider';
 import { usePrepareContractWrite, useContractWrite, useContractRead } from 'wagmi';
 import { NFTModalContext } from '../providers/TokenModalProvider';
+import { useForm } from 'react-hook-form'; // Добавлен импорт useForm
 
+// Убрали makeStyles, используем styled-components или styled из MUI
+const CardContainer = styled(Card)(({ theme }) => ({
+  // Стили
+  flexDirection: 'column',
+  display: 'flex',
+  margin: '15px',
+  flexGrow: 1,
+  maxWidth: 345,
+}));
 
-const useStyles = makeStyles({ // Стили
-  root: {
-    flexDirection: 'column',
-    display: 'flex',
-    margin: '15px',
-    flexGrow: 1,
-    maxWidth: 345,
-  },
-  media: {
-    height: 0,
-    paddingTop: '56.25%',
-    cursor: 'pointer',
-  },
-  cardContent: {
-    paddingBottom: '8px',
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-  },
+const Media = styled(CardMedia)({
+  height: 0,
+  paddingTop: '56.25%',
+  cursor: 'pointer',
+});
+
+const Content = styled(CardContent)({
+  paddingBottom: '8px',
+  display: 'flex',
+  flexDirection: 'column',
+  height: '100%',
 });
 
 function CardItem({ item, type, contractAddress, contractABI, listingFeeFunctionName = 'getListingFee' }) {
-  const classes = useStyles();
   const { account } = useContext(Web3Context);
   const { setIsModalOpen, setModalNFT } = useContext(NFTModalContext);
 
   const [quantity, setQuantity] = useState(1);
   const [price, setPrice] = useState(0);
 
-  // Чтение// Подготовка к записи в контракт (покупка)
-  const { config: buyConfig } = usePrepareContractWrite({
-    address: contractAddress,
-    abi: contractABI,
-    functionName: 'buyToken', // Замените на реальное название функции покупки
-    args: [item.tokenId, quantity], // Аргументы для функции покупки
-    value: type === 'erc20' ? price : 0 // Если покупка требует ETH, передаем цену
-  });
+
+  const { config: buyConfig } = usePrepareContractWrite({ address: contractAddress, abi: contractABI, functionName: 'buyToken', args: [item.tokenId, quantity], value: type === 'erc20' ? price : 0 });
   const { write: buy, isLoading: isBuyLoading, isError: isBuyError } = useContractWrite(buyConfig);
 
-  // Подготовка к записи в контракт (листинг)
-  const { config: listConfig } = usePrepareContractWrite({
-    address: contractAddress,
-    abi: contractABI,
-    functionName: 'listItem', // Замените на реальное название функции листинга
-    args: [item.tokenId, price], // Аргументы для функции листинга
-  });
+  const { config: listConfig } = usePrepareContractWrite({ address: contractAddress, abi: contractABI, functionName: 'listItem', args: [item.tokenId, price] });
   const { write: list, isLoading: isListLoading, isError: isListError } = useContractWrite(listConfig);
 
   const handleQuantityChange = (e) => setQuantity(e.target.value);
@@ -83,56 +72,41 @@ function CardItem({ item, type, contractAddress, contractABI, listingFeeFunction
       <Typography>Balance: {item.balance}</Typography>
       <PriceTextField value={price} onChange={handlePriceChange} />
       <QuantityTextField value={quantity} onChange={handleQuantityChange} />
-       <Button disabled={!buy || isBuyLoading} onClick={() => buy?.()}>
-          {isBuyLoading ? 'Buying...' : 'Buy'}
-        </Button>
+      <Button disabled={!buy || isBuyLoading} onClick={() => buy?.()}>{isBuyLoading ? 'Buying...' : 'Buy'}</Button>
     </>
   );
 
   const renderNFT = () => (
     <>
-      {item.image && <CardMedia className={classes.media} image={item.image} title={item.name} /> }
+      {item.image && <Media image={item.image} title={item.name} />}
       <TokenName name={item.name} />
       <TokenDescription description={item.description} />
       <TokenPrice price={item.price} />
       <PriceTextField value={price} onChange={handlePriceChange} />
       <QuantityTextField value={quantity} onChange={handleQuantityChange} />
 
-        <Button disabled={!buy || isBuyLoading} onClick={() => buy?.()}>
-          {isBuyLoading ? 'Buying...' : 'Buy'}
-        </Button>
+      <Button disabled={!buy || isBuyLoading} onClick={() => buy?.()}>{isBuyLoading ? 'Buying...' : 'Buy'}</Button>
 
       {account === item.owner && (
         <>
-          {listingFee && <Typography>Listing Fee: {listingFee?.toString()}</Typography>}
-           <Button disabled={!list || isListLoading} onClick={() => list?.()}>
-            {isListLoading ? 'Listing...' : 'List'}
-          </Button>
+          Listing Fee: {'fee'}
+          <Button disabled={!list || isListLoading} onClick={() => list?.()}>{isListLoading ? 'Listing...' : 'List'}</Button>
         </>
       )}
 
-      {isBuyError && (
-        <Typography color="error">Error buying token</Typography>
-      )}
-
-      {isListError && (
-        <Typography color="error">Error listing token</Typography>
-      )}
-
-      {isListingFeeError && (
-        <Typography color="error">Error fetching listing fee</Typography>
-      )}
+      {isBuyError && <Typography color="error">Error buying token</Typography>}
+      {isListError && <Typography color="error">Error listing token</Typography>}
 
     </>
   );
 
   return (
-    <Card className={classes.root}>
-      <CardContent className={classes.cardContent}>
+    <CardContainer>
+      <Content>
         {type === 'erc20' ? renderERC20() : renderNFT()}
         <CardAddresses item={item} type={type} />
-      </CardContent>
-    </Card>
+      </Content>
+    </CardContainer>
   );
 }
 
