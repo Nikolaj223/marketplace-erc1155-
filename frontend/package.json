@@ -1,15 +1,17 @@
 {
   "dependencies": {
-    "@emotion/react": "^11.11.1",
+    "@emotion/react": "^11.14.0",
     "@emotion/server": "^11.11.0",
-    "@emotion/styled": "^11.11.0",
-    "@mui/material": "^5.15.11",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^5.18.0",
+    "@mui/styles": "^6.5.0",
     "@tanstack/react-query": "^5.8.1",
     "@wagmi/connectors": "^2.0.0",
     "@wagmi/core": "^2.17.5",
     "axios": "^1.1.2",
     "form-data": "^4.0.4",
-    "next": "^14.0.0",
+    "multiparty": "^4.2.3",
+    "next": "^15.5.4",
     "next-connect": "^1.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
@@ -26,10 +28,11 @@
     "lint": "next lint"
   },
   "devDependencies": {
+    "@babel/eslint-parser": "^7.28.4",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
-    "eslint": "^8",
-    "eslint-config-next": "14.0.0"
+    "eslint": "^9.36.0",
+    "eslint-config-next": "^15.5.4"
   },
   "eslintConfig": {
     "extends": "next/core-web-vitals"

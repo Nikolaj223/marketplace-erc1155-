@@ -8,32 +8,34 @@ import UnsupportedChain from '../src/components/molecules/UnsupportedChain'
 import ConnectWalletMessage from '../src/components/molecules/ConnectWalletMessage'
 
 export default function MyTOKENs () {
-  const [tokens, setTokens] = useState([])
-  const { account, marketplaceContract, tokenContract, isReady, hasWeb3, network } = useContext(Web3Context)
-  const [isLoading, setIsLoading] = useState(true)
-  const [hasWindowEthereum, setHasWindowEthereum] = useState(false)
+  const [tokens, setTokens] = useState([]) // Состояние для хранения токенов
+  const { account, marketplaceContract, tokenContract, isReady, hasWeb3, network } = useContext(Web3Context) // Получаем необходимые данные из Web3Context
+  const [isLoading, setIsLoading] = useState(true)  // Состояние для отображения загрузки
+  const [hasWindowEthereum, setHasWindowEthereum] = useState(false) // Проверяем наличие Metamask
 
   useEffect(() => {
     setHasWindowEthereum(window.ethereum)
-  }, [])
+  }, []) // Проверяем наличие Metamask при монтировании компонента
 
   useEffect(() => {
-    loadTokens()
-  }, [account, isReady])
+    if (account && isReady) {
+      loadTokens()
+    }
+  }, [account, isReady]) // Загружаем токены, когда аккаунт и web3 готовы
 
   async function loadTokens () {
-    if (!isReady || !hasWeb3) return
+    setIsLoading(true) // Устанавливаем состояние загрузки
 
     try {
-      const myUniqueCreatedAndOwnedTokenIds = await getUniqueOwnedAndCreatedTokenIds(tokenContract) // Получаем все tokenId, которыми владеет пользователь и которые он создал
+      const myUniqueCreatedAndOwnedTokenIds = await getUniqueOwnedAndCreatedTokenIds(tokenContract) // Получаем ID токенов
       const myTokens = await Promise.all(myUniqueCreatedAndOwnedTokenIds.map(
-        mapCreatedAndOwnedTokenIdsAsMarketItems(marketplaceContract, tokenContract, account) // Преобразуем tokenId в объекты NFT с инфой о маркетплейсе
+        mapCreatedAndOwnedTokenIdsAsMarketItems(marketplaceContract, tokenContract, account) // Преобразуем ID в объекты NFT
       ))
-      setNfts(myTokens)
+      setTokens(myTokens) // Устанавливаем токены в состояние
     } catch (error) {
-      console.error("Ошибка при загрузке Tokens:", error)
+      console.error("Ошибка при загрузке Tokens:", error) // Ловим и выводим ошибки
     } finally {
-      setIsLoading(false)
+      setIsLoading(false) // Снимаем состояние загрузки
     }
   }
 
@@ -44,7 +46,7 @@ export default function MyTOKENs () {
   if (isLoading) return <LinearProgress/>
 
   return (
-    <TokenCardList items={tokens} setNfts={setTokens} withCreateTokens={true}/> //Обязательно items вместо nfts
+    <TokenCardList items={tokens} setNfts={setTokens} withCreateTokens={true}/> //Рендерим список токенов
   )
 }
 

@@ -3,8 +3,8 @@
 //   либо будет заменена на более современные и интегрированные подходы wagmi/viem.
 import { configureChains, createConfig } from 'wagmi';
 import { sepolia } from 'wagmi/chains';
-import { publicProvider } from 'wagmi/providers/public';
-import { MetaMaskConnector } from 'wagmi/connectors/metaMask';
+import { publicProvider } from 'wagmi';
+import { MetaMaskConnector } from 'wagmi';
 
 // Определение поддерживаемых сетей (Sepolia)
 const { chains, publicClient } = configureChains(

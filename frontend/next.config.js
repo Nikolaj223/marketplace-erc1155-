@@ -2,12 +2,14 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['ipfs.io']
+    domains: ['ipfs.io'],
   },
-  outputFileTracingRoot: __dirname, // Указываем корень проекта
-   transpilePackages: ['@wagmi/core',
+  transpilePackages: [
+    '@wagmi/core',
     '@wagmi/chains',
-    '@wagmi/connectors'],//укажим пакеты для транспиляции
+    '@wagmi/connectors',
+  ],//укажим пакеты для транспиляции
+  outputFileTracingRoot: __dirname, // Добавляем эту строку. __dirname - текущая директория, корень проекта
 };
 
 module.exports = nextConfig;
