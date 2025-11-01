@@ -1,3 +1,8 @@
+// Этот файл позволяет настроить тег <html> и <body> для всего приложения.
+//  Здесь используется styled-components для стилизации на стороне сервера. 
+//   ServerStyleSheet собирает стили компонентов при рендеринге страницы и добавляет их в <head>.
+
+
 import React from 'react';
 import Document, { Html, Head, Main, NextScript } from 'next/document';
 import { ServerStyleSheet } from 'styled-components';

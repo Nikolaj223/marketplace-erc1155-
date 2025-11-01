@@ -1,9 +1,13 @@
+// Задача: Компонент для минтинга новых NFT (ERC1155) токенов. Позволяет пользователю задать ID токена, количество и URL метаданных.
+// Импорты: Аналогичны ERC20Creation.js, но вместо фабрики ERC20 используется контракт NFT (nftContract).
+// Логика: Аналогична ERC20Creation.js, но вызывает функцию mint контракта NFT и передает ID токена, количество и URL метаданных.
+
 import { useForm } from 'react-hook-form';
 import { Button, CircularProgress, TextField } from '@mui/material';
-import { useContractWrite } from '@wagmi/core';
+import { useContractWrite } from 'wagmi';
 import { Web3Context } from '../providers/Web3Provider';
 import { useContext } from 'react';
-
+import { usePrepareContractWrite, useNetwork } from 'wagmi';
 export default function NFTCreation({ addNFTToList }) {
     const { register, handleSubmit, formState: { errors } } = useForm();
     const { nftContract } = useContext(Web3Context);

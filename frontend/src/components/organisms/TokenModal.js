@@ -1,3 +1,16 @@
+// Задача: Модальное окно для отображения информации о конкретном токене.
+// Импорты:
+// useContext (react): Получение контекста.
+// TokenModalContext (../providers/TokenModalProvider): Контекст с инфой о токене, который нужно показать, и состоянием модального окна.
+// Fade, Modal, Backdrop (MUI): UI-компоненты для модального окна с анимацией.
+// makeStyles (MUI): Устаревавший способ задания стилей, правильнее использовать styled-components или sx.
+// TokenModalContent (./TokenModalContent): Компонент, отвечающий за отображение контента внутри модального окна (детали о токене).
+// Логика:
+// Получает информацию о токене (modalToken), и состояние модального окна (isModalOpen) из контекста TokenModalContext.
+// Отображает модальное окно, если isModalOpen true.
+// Внутри модального окна рендерится TokenModalContent, которому передается информация о токене.
+// При закрытии модалки вызывается handleCloseModal, который обновляет состояние isModalOpen в контексте.
+
 import { useContext } from 'react';
 import { TokenModalContext } from '../providers/TokenModalProvider'; // Подменяем контекст
 import Fade from '@mui/material/Fade';

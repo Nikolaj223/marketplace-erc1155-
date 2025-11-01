@@ -1,35 +1,18 @@
-import { WagmiProvider, createConfig, configureChains } from 'wagmi';
-import { sepolia } from 'wagmi/chains';
-import { publicProvider } from 'wagmi';
-import { MetaMaskConnector } from 'wagmi';
-import { WalletConnectConnector } from '@wagmi/connectors/walletConnect';
+// Это кастомный компонент App в Next.js. Он оборачивает все страницы приложения в WagmiProvider, который предоставляет контекст
+//  Wagmi (библиотека для работы с web3).
+//  wagmiConfig содержит конфигурацию для Wagmi, включая подключение к сети Sepolia, MetaMask и WalletConnect.
 
-const { publicClient, webSocketPublicClient } = configureChains(
-  [sepolia], // Use Sepolia chain
-  [publicProvider()]
-);
 
-const config = createConfig({
-  autoConnect: true,
-  publicClient,
-  webSocketPublicClient,
-  connectors: [
-    new MetaMaskConnector({ chains: [sepolia] }), // Use Sepolia chain
-    new WalletConnectConnector({
-      chains: [sepolia], // Use Sepolia chain
-      options: { projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID },
-    }),
-  ],
-});
-
-import TokenModalProvider from '../src/components/providers/TokenModalProvider';
+import { WagmiProvider } from 'wagmi';
+import wagmiConfig from '../src/config/wagmi-config';
+import Web3Provider from '../src/components/providers/Web3Provider';
 
 function MyApp({ Component, pageProps }) {
   return (
-    <WagmiProvider config={config}>
-      <TokenModalProvider>
+    <WagmiProvider config={wagmiConfig}>
+      <Web3Provider>
         <Component {...pageProps} />
-      </TokenModalProvider>
+      </Web3Provider>
     </WagmiProvider>
   );
 }
@@ -46,46 +29,184 @@ export default MyApp;
 
 
 
+// import { createConfig, WagmiProvider } from 'wagmi';
+// import { sepolia } from '@wagmi/core/chains';
+// import { MetaMaskConnector } from '@wagmi/connectors/metaMask';
+// import { WalletConnectConnector } from '@wagmi/connectors/walletConnect';
+// import TokenModalProvider from '../src/components/providers/TokenModalProvider';
 
-// import { WagmiProvider, createConfig, configureChains } from 'wagmi';
-  //   import { polygonMumbai } from 'wagmi/chains'; // Импортируйте нужную вам цепочку
-  //   import { publicProvider } from 'wagmi/providers/public';
-  //   import { MetaMaskConnector } from 'wagmi/connectors/metaMask';
-  //   import { WalletConnectConnector } from 'wagmi/connectors/walletConnect';
+// // Замените "YOUR_WALLETCONNECT_PROJECT_ID" на свой реальный Project ID из WalletConnect Cloud
+// const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_WALLETCONNECT_PROJECT_ID';
 
-  //   // 1. Настройка цепочек и провайдеров
-  //   const { publicClient, webSocketPublicClient } = configureChains(
-  //     [polygonMumbai], // Добавьте сюда другие цепочки, если нужно (например, hardhat для локальной разработки)
-  //     [publicProvider()] // Можно добавить AlchemyProvider, InfuraProvider для продакшена
-  //   );
+// // Конфигурация Wagmi
+// const config = createConfig({
+//     autoConnect: true,
+//     chains: [sepolia],
+//     connectors: [
+//         new MetaMaskConnector(), // Создаем экземпляр MetaMaskConnector
+//         new WalletConnectConnector({  // Создаем экземпляр WalletConnectConnector
+//             options: {
+//                 projectId: walletConnectProjectId,
+//             },
+//         }),
+//     ],
+// });
 
-  //   // 2. Настройка коннекторов
-  //   const config = createConfig({
-  //     autoConnect: true, // Автоматически подключает пользователя, если он уже был подключен
-  //     publicClient,
-  //     webSocketPublicClient,
-  //     connectors: [
-  //       new MetaMaskConnector({ chains: [polygonMumbai] }),
-  //       new WalletConnectConnector({ 
-  //         chains: [polygonMumbai], 
-  //         options: { projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID } // ⒷОБЯЗАТЕЛЬНО: Получите Project ID!Ⓑ
-  //       }),
-  //       // Добавьте другие коннекторы при необходимости
-  //     ],
-  //   });
+// function MyApp({ Component, pageProps }) {
+//     return (
+//         <WagmiProvider config={config}>
+//             <TokenModalProvider>
+//                 <Component {...pageProps} />
+//             </TokenModalProvider>
+//         </WagmiProvider>
+//     );
+// }
 
-  //   // 3. Импорт существующих провайдеров вашего фронтенда
-  //   import NFTModalProvider from '../src/providers/NFTModalProvider'; // Из вашей структуры src/providers
-  //   // import { Web3Context } from '../src/providers/Web3Provider'; // Возможно, вы удалите этот провайдер или сильно его измените
+// export default MyApp;
 
-  //   function MyApp({ Component, pageProps }) {
-  //     return (
-  //       <WagmiProvider config={config}>
-  //         <NFTModalProvider> {/* Оберните в свои провайдеры */}
-  //           <Component {...pageProps} />
-  //         </NFTModalProvider>
-  //       </WagmiProvider>
-  //     );
-  //   }
 
-  //   export default MyApp;
+
+
+
+
+
+
+
+
+// import { WagmiProvider, createConfig } from 'wagmi';
+// import { sepolia } from '@wagmi/core/chains';
+// import { MetaMaskConnector } from '@wagmi/connectors/metaMask';
+// import { WalletConnectConnector } from '@wagmi/connectors/walletConnect';
+// import { http } from 'wagmi';
+// import TokenModalProvider from '../src/components/providers/TokenModalProvider';
+
+// // Конфигурация Wagmi
+// const config = createConfig({
+//   autoConnect: true,
+//   chains: [sepolia],
+//   transports: {
+//     [sepolia.id]: http(),
+//   },
+//   connectors: [
+//     new MetaMaskConnector({ chains: [sepolia] }),
+//     new WalletConnectConnector({
+//       chains: [sepolia],
+//       options: { projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID },
+//     }),
+//   ],
+// });
+
+// function MyApp({ Component, pageProps }) {
+//   return (
+//     <WagmiProvider config={config}>
+//       <TokenModalProvider>
+//         <Component {...pageProps} />
+//       </TokenModalProvider>
+//     </WagmiProvider>
+//   );
+// }
+
+// export default MyApp;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//  import { WagmiProvider } from 'wagmi';
+//    import { sepolia } from '@wagmi/core/chains';
+//    //import { MetaMaskConnector, WalletConnectConnector } from '@wagmi/core/connectors'; // Удаляем старый импорт
+
+//    import { MetaMaskConnector } from '@wagmi/connectors/metaMask'; //  Новый импорт
+//    import { WalletConnectConnector } from '@wagmi/connectors/walletConnect'; // Новый импорт
+
+//    import { createConfig, http } from '@wagmi/core';
+//    import TokenModalProvider from '../src/components/providers/TokenModalProvider';
+
+
+
+
+
+
+
+
+
+// // import { WagmiProvider } from 'wagmi';
+// // import { sepolia } from '@wagmi/core/chains';
+// // import { MetaMaskConnector, WalletConnectConnector } from '@wagmi/core/connectors';
+// // import { createConfig, http } from '@wagmi/core';
+// // import TokenModalProvider from '../src/components/providers/TokenModalProvider';
+
+// // Конфигурация Wagmi
+// const config = createConfig({
+//   autoConnect: true,
+//   chains: [sepolia],
+//   transports: {
+//     [sepolia.id]: http(),
+//   },
+//   connectors: [
+//     new MetaMaskConnector({ chains: [sepolia] }),
+//     new WalletConnectConnector({
+//       chains: [sepolia],
+//       options: { projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID },
+//     }),
+//   ],
+// });
+
+// function MyApp({ Component, pageProps }) {
+//   return (
+//     <WagmiProvider config={config}>
+//       <TokenModalProvider>
+//         <Component {...pageProps} />
+//       </TokenModalProvider>
+//     </WagmiProvider>
+//   );
+// }
+
+// export default MyApp;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,53 +1,60 @@
-import { LinearProgress } from '@mui/material'
-import { useContext, useEffect, useState } from 'react'
-import InstallMetamask from '../src/components/molecules/InstallMetamask'
-import TokenCardList from '../src/components/organisms/TokenCardList'
-import { Web3Context } from '../src/components/providers/Web3Provider'
-import { mapCreatedAndOwnedTokenIdsAsMarketItems, getUniqueOwnedAndCreatedTokenIds } from '../src/utils/token'
-import UnsupportedChain from '../src/components/molecules/UnsupportedChain'
-import ConnectWalletMessage from '../src/components/molecules/ConnectWalletMessage'
+// Задача: Отображает NFT, созданные и принадлежащие текущему пользователю. Это страница, где пользователь может видеть свои NFT.
+// Импорты:Аналогичны index.js, плюс:
+// InstallMetamask (../src/components/molecules/InstallMetamask): Компонент, предлагающий установить Metamask, если он не установлен.
+// ConnectWalletMessage (../src/components/molecules/ConnectWalletMessage): Компонент, предлагающий подключить кошелек, если он не подключен.
+// mapCreatedAndOwnedTokenIdsAsMarketItems, getUniqueOwnedAndCreatedTokenIds (../src/utils/token): 
+// Функции для получения и преобразования данных о NFT пользователя.
+// Логика:
+// Получает учетную запись пользователя (account), контракты и статус подключения из Web3Context.
+// При монтировании компонента загружает ID всех NFT, созданных и принадлежащих пользователю (getUniqueOwnedAndCreatedTokenIds).
+// Используя полученные id, извлекает информацию об NFT (mapCreatedAndOwnedTokenIdsAsMarketItems).
+// Отображает список NFT с помощью TokenCardList.
+// Отображает сообщения, если Metamask не установлен или кошелек не подключен.
+// Отображает индикатор загрузки, если данные еще не загружены.
 
-export default function MyTOKENs () {
-  const [tokens, setTokens] = useState([]) // Состояние для хранения токенов
-  const { account, marketplaceContract, tokenContract, isReady, hasWeb3, network } = useContext(Web3Context) // Получаем необходимые данные из Web3Context
-  const [isLoading, setIsLoading] = useState(true)  // Состояние для отображения загрузки
-  const [hasWindowEthereum, setHasWindowEthereum] = useState(false) // Проверяем наличие Metamask
+import { LinearProgress } from '@mui/material';
+import { useContext, useEffect, useState, useCallback } from 'react';
+import InstallMetamask from '../src/components/molecules/InstallMetamask';
+import TokenCardList from '../src/components/organisms/TokenCardList';
+import { Web3Context } from '../src/components/providers/Web3Provider';
+import { mapCreatedAndOwnedTokenIdsAsMarketItems, getUniqueOwnedAndCreatedTokenIds } from '../src/utils/token';
+import UnsupportedChain from '../src/components/molecules/UnsupportedChain';
+import ConnectWalletMessage from '../src/components/molecules/ConnectWalletMessage';
+
+export default function MyTokens() {
+  const [tokens, setTokens] = useState([]);
+  const { account, marketplaceContract, tokenContract, isReady, hasWeb3, network } = useContext(Web3Context);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasWindowEthereum, setHasWindowEthereum] = useState(false);
 
   useEffect(() => {
-    setHasWindowEthereum(window.ethereum)
-  }, []) // Проверяем наличие Metamask при монтировании компонента
+    setHasWindowEthereum(!!window.ethereum);
+  }, []);
 
-  useEffect(() => {
-    if (account && isReady) {
-      loadTokens()
-    }
-  }, [account, isReady]) // Загружаем токены, когда аккаунт и web3 готовы
-
-  async function loadTokens () {
-    setIsLoading(true) // Устанавливаем состояние загрузки
-
+  const loadTokens = useCallback(async () => {
+    if (!account || !isReady) return;
+    setIsLoading(true);
     try {
-      const myUniqueCreatedAndOwnedTokenIds = await getUniqueOwnedAndCreatedTokenIds(tokenContract) // Получаем ID токенов
-      const myTokens = await Promise.all(myUniqueCreatedAndOwnedTokenIds.map(
-        mapCreatedAndOwnedTokenIdsAsMarketItems(marketplaceContract, tokenContract, account) // Преобразуем ID в объекты NFT
-      ))
-      setTokens(myTokens) // Устанавливаем токены в состояние
+      const ids = await getUniqueOwnedAndCreatedTokenIds(tokenContract);
+      const myTokens = await Promise.all(ids.map(mapCreatedAndOwnedTokenIdsAsMarketItems(marketplaceContract, tokenContract, account)));
+      setTokens(myTokens);
     } catch (error) {
-      console.error("Ошибка при загрузке Tokens:", error) // Ловим и выводим ошибки
+      console.error("Ошибка при загрузке Tokens:", error);
     } finally {
-      setIsLoading(false) // Снимаем состояние загрузки
+      setIsLoading(false);
     }
-  }
+  }, [account, isReady, marketplaceContract, tokenContract]);
 
-  // Рендерим компоненты в зависимости от состояния web3
-  if (!hasWindowEthereum) return <InstallMetamask/>
-  if (!hasWeb3) return <ConnectWalletMessage/>
-  if (!network) return <UnsupportedChain/>
-  if (isLoading) return <LinearProgress/>
+  useEffect(() => {
+    loadTokens();
+  }, [loadTokens]);
 
-  return (
-    <TokenCardList items={tokens} setNfts={setTokens} withCreateTokens={true}/> //Рендерим список токенов
-  )
+  if (!hasWindowEthereum) return <InstallMetamask />;
+  if (!hasWeb3) return <ConnectWalletMessage />;
+  if (!network) return <UnsupportedChain />;
+  if (isLoading) return <LinearProgress />;
+
+  return <TokenCardList items={tokens} setNfts={setTokens} withCreateTokens={true} />;
 }
 
 

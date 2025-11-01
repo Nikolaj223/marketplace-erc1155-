@@ -1,6 +1,19 @@
+// Задача: Компонент для создания новых ERC20 токенов. Позволяет пользователю задать имя, символ, количество знаков после запятой
+//  (decimals) и начальную эмиссию токена.
+// Импорты:
+// useForm (react-hook-form): Для управления формой и валидацией данных.
+// Button, CircularProgress, TextField (MUI): UI-компоненты.
+// useContractWrite (wagmi): Хук для вызова функций смарт-контракта на запись.
+// Web3Context (../providers/Web3Provider): Контекст с информацией о web3 (провайдер, кошелек, фабрика контрактов ERC20)
+// useContext (react): Хук для доступа к контексту.
+// Логика:
+// Собирает данные из формы.
+// Использует useContractWrite для вызова функции createToken фабрики контрактов ERC20.
+// Передает данные из формы в качестве аргументов для функции контракта.
+
 import { useForm } from 'react-hook-form';
 import { Button, CircularProgress, TextField } from '@mui/material';
-import { useContractWrite } from '@wagmi/core';
+import { useContractWrite } from 'wagmi';
 import { Web3Context } from '../providers/Web3Provider';
 import { useContext } from 'react';
 

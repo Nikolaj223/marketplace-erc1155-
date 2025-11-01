@@ -1,16 +1,10 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { useAccount, useBalance, useNetwork, useConnect, useDisconnect, useContract } from 'wagmi';
+import { ethers } from 'ethers';
 import { sepolia } from 'wagmi/chains';
-
-// Импортируем ABI из папки artifacts
 import TestTokenABI from '../../../../backend/artifacts/contracts/TestToken.sol/TestToken.json';
 import TestERC20ABI from '../../../../backend/artifacts/contracts/TestERC20.sol/TestERC20.json';
 import MarketplaceABI from '../../../../backend/artifacts/contracts/Marketplace.sol/Marketplace.json';
 import BlacklistControlABI from '../../../../backend/artifacts/contracts/BlacklistControl.sol/BlacklistControl.json';
-
-const networkNames = {
-    [sepolia.id]: 'Sepolia Testnet',
-};
 
 const contractAddresses = {
     [sepolia.id]: {
@@ -25,65 +19,90 @@ export const Web3Context = createContext();
 export const useWeb3Context = () => useContext(Web3Context);
 
 export default function Web3Provider({ children }) {
-    const { address, isConnected } = useAccount();
-    const { chain } = useNetwork();
-    const { connect, connectors } = useConnect();
-    const { balance } = useBalance({ address });
-    const { disconnect } = useDisconnect();
-
-    const [networkName, setNetworkName] = useState(networkNames[sepolia.id]);
-
-    // Используем ABI при создании контрактов
-    const nftContract = useContract({
-        address: chain?.id === sepolia.id ? contractAddresses[sepolia.id].nftContract : null,
-        abi: TestTokenABI,
-    });
-
-    const marketContract = useContract({
-        address: chain?.id === sepolia.id ? contractAddresses[sepolia.id].marketplaceContract : null,
-        abi: MarketplaceABI,
-    });
-
-    const erc20Contract = useContract({
-        address: chain?.id === sepolia.id ? contractAddresses[sepolia.id].erc20Contract : null,
-        abi: TestERC20ABI,
-    });
-
-    const blacklistContract = useContract({
-        address: chain?.id === sepolia.id ? contractAddresses[sepolia.id].blacklistContract : null,
-        abi: BlacklistControlABI,
-    });
+    const [account, setAccount] = useState(null);
+    const [network, setNetwork] = useState('Unknown');
+    const [balance, setBalance] = useState(0);
+    const [isConnected, setIsConnected] = useState(false);
+    const [nftContract, setNftContract] = useState(null);
+    const [marketContract, setMarketContract] = useState(null);
+    const [erc20Contract, setErc20Contract] = useState(null);
+    const [blacklistContract, setBlacklistContract] = useState(null);
+    const hasWeb3 = true;
+    const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
-        if (chain?.id) {
-            setNetworkName(networkNames[chain.id] || chain.name);
-        }
-    }, [chain]);
+        const setupWeb3 = async () => {
+            if (window.ethereum) {
+                setIsLoading(true)
+                try {
+                    // Сначала проверяем, подключен ли уже аккаунт
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts.length > 0) {
+                        setAccount(accounts[0]);
+                        setIsConnected(true);
+                    } else {
+                        // Запрашиваем доступ к аккаунтам, если еще не подключены
+                        const newAccounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                        if (newAccounts.length > 0) {
+                            setAccount(newAccounts[0]);
+                            setIsConnected(true);
+                        }
+                    }
 
-    const isReady = isConnected && nftContract.address && marketContract.address && erc20Contract.address && blacklistContract.address;
-    const hasWeb3 = true;
+
+                    const provider = new ethers.BrowserProvider(window.ethereum);
+                    const signer = await provider.getSigner();
+                    const address = await signer.getAddress();
+
+                    setAccount(address);
+                    setIsConnected(true);
+
+                    const networkInfo = await provider.getNetwork();
+                    setNetwork(networkInfo.name);
+
+                    const balanceWei = await provider.getBalance(address);
+                    const balanceEther = ethers.formatEther(balanceWei);
+                    setBalance(balanceEther);
+
+                    if (contractAddresses[sepolia.id]) {
+                        const { nftContract: nftAddress, marketplaceContract: marketAddress, erc20Contract: erc20Address, blacklistContract: blacklistAddress } = contractAddresses[sepolia.id];
+
+                        if (nftAddress) setNftContract(new ethers.Contract(nftAddress, TestTokenABI, signer));
+                        if (marketAddress) setMarketContract(new ethers.Contract(marketAddress, MarketplaceABI, signer));
+                        if (erc20Address) setErc20Contract(new ethers.Contract(erc20Address, TestERC20ABI, signer));
+                        if (blacklistAddress) setBlacklistContract(new ethers.Contract(blacklistAddress, BlacklistControlABI, signer));
+                    }
+                } catch (error) {
+                    console.error("Ошибка при инициализации Web3:", error);
+                } finally {
+                  setIsLoading(false)
+                }
+            }
+        };
+
+        setupWeb3();
+    }, []);
+
+   // Пока идет загрузка, можно показывать сообщение
+    if (isLoading) {
+        return <div>Подключение к MetaMask...</div>;
+    }
+
+    const values = {
+        account,
+        network,
+        balance,
+        isConnected,
+        hasWeb3,
+        nftContract,
+        marketContract,
+        erc20Contract,
+        blacklistContract,
+    };
 
     return (
-        <Web3Context.Provider
-            value={{
-               account: address,
-                 network: networkName,
-                 balance: balance?.formatted || 0,
-                isConnected,
-                isReady,
-               hasWeb3,
-                connect: (connectorId) => {
-                const connector = connectors.find(c => c.id === connectorId);
-                if (connector) connect({ connector });
-        },
-        disconnect,
-            nftContract: nftContract.contract,
-            marketContract: marketContract.contract,
-            erc20Contract: erc20Contract.contract,
-            blacklistContract: blacklistContract.contract,
-    }}
-        >
-        {children}
+        <Web3Context.Provider value={values}>
+            {children}
         </Web3Context.Provider>
     );
 }
@@ -93,80 +112,91 @@ export default function Web3Provider({ children }) {
 
 
 
-// import { createContext, useEffect, useState } from 'react';
-// import { useAccount, useBalance, useNetwork, useConnect, useDisconnect } from 'wagmi';
-// import { MetaMaskConnector } from 'wagmi/connectors/metaMask';
-// import { WalletConnectConnector } from 'wagmi/connectors/walletConnect'; // Если используете
-// import { zeroAddress } from 'viem'; // Для ethers.constants.AddressZero
+// import { createContext, useContext, useEffect, useState } from 'react';
+// import { ethers } from 'ethers';
+// import { sepolia } from 'wagmi/chains';
+// import TestTokenABI from '../../../../backend/artifacts/contracts/TestToken.sol/TestToken.json';
+// import TestERC20ABI from '../../../../backend/artifacts/contracts/TestERC20.sol/TestERC20.json';
+// import MarketplaceABI from '../../../../backend/artifacts/contracts/Marketplace.sol/Marketplace.json';
+// import BlacklistControlABI from '../../../../backend/artifacts/contracts/BlacklistControl.sol/BlacklistControl.json';
 
-// // Предполагается, что у вас есть этот объект, если он используется для отображения названий сетей
-// const networkNames = {
-//   // Пример:
-//   hardhat: 'Localhost',
-//   goerli: 'Goerli Testnet',
-//   polygonMumbai: 'Polygon Mumbai Testnet', // Добавьте свою сеть
-//   // ... другие сети
+// const contractAddresses = {
+//     [sepolia.id]: {
+//         marketplaceContract: process.env.MARKETPLACE_CONTRACT_ADDRESS_SEPOLIA,
+//         nftContract: process.env.TestToken_ADDRESS_SEPOLIA,
+//         erc20Contract: process.env.TEST_ERC20_CONTRACT_ADDRESS_SEPOLIA,
+//         blacklistContract: process.env.BLACKLIST_CONTRACT_ADDRESS_SEPOLIA,
+//     },
 // };
 
-// export const Web3Context = createContext({
-//   account: null,
-//   network: null,
-//   balance: null,
-//   isConnected: false,
-//   isReady: false,
-//   hasWeb3: false,
-//   connect: () => {}, // Пустая функция для инициализации
-//   disconnect: () => {},
-//   connectors: [],
-// });
+// export const Web3Context = createContext();
+// export const useWeb3Context = () => useContext(Web3Context);
 
 // export default function Web3Provider({ children }) {
-//   // Wagmi Hooks для получения данных
-//   const { address, isConnected, connector } = useAccount(); // account, isConnected
-//   const { data: balanceData, isLoading: isBalanceLoading } = useBalance({ address, watch: true }); // balance
-//   const { chain } = useNetwork(); // network
-//   const { connect, connectors, isLoading: isConnecting } = useConnect(); // connect functionality
-//   const { disconnect } = useDisconnect(); // disconnect functionality
+//     const [account, setAccount] = useState(null);
+//     const [network, setNetwork] = useState('Unknown');
+//     const [balance, setBalance] = useState(0);
+//     const [isConnected, setIsConnected] = useState(false);
+//     const [nftContract, setNftContract] = useState(null);
+//     const [marketContract, setMarketContract] = useState(null);
+//     const [erc20Contract, setErc20Contract] = useState(null);
+//     const [blacklistContract, setBlacklistContract] = useState(null);
+//     const hasWeb3 = true;
 
-//   // Состояния, которые вы можете использовать для преобразования данных Wagmi в удобный формат
-//   const [networkName, setNetworkName] = useState(null);
+//     useEffect(() => {
+//         const setupWeb3 = async () => {
+//             if (window.ethereum) {
+//                 try {
+//                     const provider = new ethers.BrowserProvider(window.ethereum);
+//                     const signer = await provider.getSigner();
+//                     const address = await signer.getAddress();
 
-//   useEffect(() => {
-//     if (chain?.name) {
-//       setNetworkName(networkNames[chain.name] || chain.name);
-//     } else {
-//       setNetworkName(null);
-//     }
-//   }, [chain]);
+//                     setAccount(address);
+//                     setIsConnected(true);
 
-//   // Можно удалить initializeWeb3 полностью, так как Wagmi обрабатывает подключение.
-//   // Если вам нужна кнопка "Connect Wallet", вызовите connect({ connector: ... }) напрямую.
-//   // const initializeWeb3 = async () => { /* ... */ }; // Эту функцию можно убрать
+//                     const networkInfo = await provider.getNetwork();
+//                     setNetwork(networkInfo.name);
 
-//   // Определения для value
-//   const account = address || null;
-//   const isReady = isConnected; // Если кошелек подключен, считаем, что Web3 готов
-//   const hasWeb3 = true; // С Wagmi всегда true, так как он сам по себе "наличие Web3"
+//                     const balanceWei = await provider.getBalance(address);
+//                     const balanceEther = ethers.formatEther(balanceWei);
+//                     setBalance(balanceEther);
 
-//   return (
-//     <Web3Context.Provider
-//       value={{
+//                     if (contractAddresses[sepolia.id]) {
+//                         const { nftContract: nftAddress, marketplaceContract: marketAddress, erc20Contract: erc20Address, blacklistContract: blacklistAddress } = contractAddresses[sepolia.id];
+
+//                         if (nftAddress) setNftContract(new ethers.Contract(nftAddress, TestTokenABI, signer));
+//                         if (marketAddress) setMarketContract(new ethers.Contract(marketAddress, MarketplaceABI, signer));
+//                         if (erc20Address) setErc20Contract(new ethers.Contract(erc20Address, TestERC20ABI, signer));
+//                         if (blacklistAddress) setBlacklistContract(new ethers.Contract(blacklistAddress, BlacklistControlABI, signer));
+//                     }
+//                 } catch (error) {
+//                     console.error("Ошибка при инициализации Web3:", error);
+//                 }
+//             }
+//         };
+
+//         setupWeb3();
+//     }, []);
+
+//     const values = {
 //         account,
-//         network: networkName, // Отображаемое имя сети
-//         balance: balanceData?.formatted ? parseFloat(balanceData.formatted) : 0, // Баланс в виде числа
-//         isConnected, // Проверка, подключен ли пользователь
-//         isReady, // Готовность к взаимодействию
-//         hasWeb3, // Доступность Web3-окружения
-//         connect: (connectorId) => {
-//             // Функция для подключения, если вы хотите вызвать её из UI (например, из NavBar)
-//             const conn = connectors.find(c => c.id === connectorId);
-//             if (conn) connect({ connector: conn });
-//         },
-//         disconnect,
-//         connectors // Передаем список доступных коннекторов для рендеринга кнопок
-//       }}
-//     >
-//       {children}
-//     </Web3Context.Provider>
-//   );
+//         network,
+//         balance,
+//         isConnected,
+//         hasWeb3,
+//         nftContract,
+//         marketContract,
+//         erc20Contract,
+//         blacklistContract,
+//     };
+
+//     return (
+//         <Web3Context.Provider value={values}>
+//             {children}
+//         </Web3Context.Provider>
+//     );
 // }
+
+
+
+

@@ -1,4 +1,6 @@
 // для навигации 
+// Компонент для создания навигационных элементов.
+//  Использует next/link для создания ссылок. Отображает активную страницу.
 import PropTypes from 'prop-types'
 import Link from 'next/link'
 import { Button } from '@mui/material'

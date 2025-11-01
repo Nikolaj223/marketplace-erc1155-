@@ -1,3 +1,9 @@
+// Это базовый макет (layout) приложения. Он включает в себя NavBar (панель навигации), 
+// LowOnBalanceTip (предупреждение о низком балансе), TokenModal (модальное окно для работы с токенами)
+//  и предоставляет контекст Web3Context через Web3Provider.
+//  Он также управляет видимостью TokenModal через TokenModalProvider.
+
+
 import { useContext } from 'react'
 import LowOnBalanceTip from '../molecules/LowOnBalanceTip'
 import NavBar from '../molecules/NavBar'

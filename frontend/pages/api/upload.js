@@ -1,4 +1,14 @@
 //  для загрузки файлов (изображений) и метаданных (JSON) в IPFS (InterPlanetary File System) через сервис Pinata. 
+// Основная задача этого файла – загрузка файлов (изображений) и JSON метаданных в IPFS (InterPlanetary File System) через сервис Pinata. 
+// Он использует axios для отправки HTTP-запросов, fs для чтения файлов, 
+// form-data для создания multipart/form-data запроса и next-connect для обработки запросов. Ключевые шаги:
+
+
+// Загрузка файла на Pinata
+// Формирование URL файла
+// Создание JSON метаданных
+// Загрузка JSON на Pinata
+// Возврат URL метаданных.
 import axios from 'axios'
 import fs from 'fs'
 import middleware from './middleware/middleware'
