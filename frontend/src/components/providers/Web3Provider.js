@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { ethers } from 'ethers';
 import { sepolia } from 'wagmi/chains';
-import TestTokenABI from '../../public/TestToken.json';
-import TestERC20ABI from '../../public/TestERC20.json';
-import MarketplaceABI from '../../public/Marketplace.json'; 
-import BlacklistControlABI from '../../public/BlacklistControl.json';
+import TestTokenABI from '../../../public/TestToken.json';
+import TestERC20ABI from '../../../public/TestERC20.json';
+import MarketplaceABI from '../../../public/Marketplace.json';
+import BlacklistControlABI from '../../../public/BlacklistControl.json';
 
 const contractAddresses = {
     [sepolia.id]: {
